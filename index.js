@@ -1,31 +1,58 @@
-const yargs = require('yargs');
+const express = require('express');
+const chalk = require('chalk');
+const path = require('path');
+const { addNote, getNotes, removeNote, editNote } = require('./notes.controller');
 
-const { addNote, removeNote, printNotes } = require('./notes.controller');
+const port = 3000;
+const app = express();
 
-yargs.command({
-  command: 'add',
-  describe: 'Add new note to the list',
-  builder: { title: { type: 'string', describe: 'Note title', demandOption: true } },
-  handler({ title }) {
-    addNote(title);
-  },
+app.set('view engine', 'ejs');
+app.set('views', 'pages');
+
+app.use(express.json());
+app.use(express.static(path.resolve(__dirname, 'public')));
+app.use(
+  express.urlencoded({
+    extended: true,
+  })
+);
+
+app.get('/', async (req, res) => {
+  res.render('index', {
+    title: 'Express App',
+    notes: await getNotes(),
+    created: false,
+  });
 });
 
-yargs.command({
-  command: 'list',
-  describe: 'Print notes list',
-  handler() {
-    printNotes();
-  },
+app.post('/', async (req, res) => {
+  await addNote(req.body.title);
+  res.render('index', {
+    title: 'Express App',
+    notes: await getNotes(),
+    created: true,
+  });
 });
 
-yargs.command({
-  command: 'remove',
-  describe: 'Remove note from list by id',
-  builder: { id: { type: 'string', describe: 'Note ID', demandOption: true } },
-  handler({ id }) {
-    removeNote(id);
-  },
+app.put('/:id', async (req, res) => {
+  console.log('PUT', req.params.id, req.body.title);
+  await editNote(req.params.id, req.body.title);
+  res.render('index', {
+    title: 'Express App',
+    notes: await getNotes(),
+    created: false,
+  });
 });
 
-yargs.parse();
+app.delete('/:id', async (req, res) => {
+  await removeNote(req.params.id);
+  res.render('index', {
+    title: 'Express App',
+    notes: await getNotes(),
+    created: false,
+  });
+});
+
+app.listen(port, () => {
+  console.log(chalk.green(`Server has been started on port ${port}...`));
+});

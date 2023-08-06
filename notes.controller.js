@@ -12,6 +12,18 @@ async function addNote(title) {
   console.log(/* chalk.green */ 'Note was added!');
 }
 
+async function editNote(id, title) {
+  const notes = await getNotes();
+  const note = notes.find((note) => {
+    return note.id === id;
+  });
+
+  note.title = title;
+
+  await fs.writeFile(dpPath, JSON.stringify(notes));
+  console.log(/* chalk.green */ 'Note was edited!');
+}
+
 async function removeNote(id) {
   let notes = await getNotes();
   let has = false;
@@ -38,4 +50,4 @@ async function printNotes() {
   });
 }
 
-module.exports = { addNote, removeNote, printNotes };
+module.exports = { addNote, removeNote, getNotes, editNote };
